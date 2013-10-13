@@ -83,7 +83,6 @@ def main():
 		current_room_number += 1
 		placeTunnel(current_room_number,height)
 		current_room_number += 1
-	
 	level.saveInPlace()
 
 if __name__ == "__main__":
