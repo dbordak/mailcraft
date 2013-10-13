@@ -1,5 +1,5 @@
 import contextio as c
-from secrets import CONSUMER_KEY, CONSUMER_SECRET
+from secrets import CONSUMER_KEY, CONSUMER_SECRET, EMAIL
 
 def getmail():
     context_io = c.ContextIO(
@@ -8,7 +8,7 @@ def getmail():
         #debug=True
     )
 
-    accounts = context_io.get_accounts(email='rsopher@gmail.com')
+    accounts = context_io.get_accounts(email=EMAIL)
 
     data=[]
 
@@ -37,3 +37,6 @@ def getmail():
         data.append(threaddata)
 
     return data
+
+if __name__ == '__main__':
+	mail()

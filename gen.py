@@ -1,6 +1,7 @@
 #from os import path
 from pymclevel import mclevel
 #from pymclevel.box import BoundingBox
+from getmail import *
 import random
 
 
@@ -50,11 +51,12 @@ def placeFirstRoom(row_num):
 	next_room = level.getChunk(2,2+row_num)
 	deepCopy(next_room,start_block)
 
-def placeNextRoom(row_num,seed,h):
-	next_room = level.getChunk(2,2+row_num)
+def placeNextRoom(col_num,row_num,seed,h):
+	next_room = level.getChunk(2+col_num,2+row_num)
 	i = pickIndex(seed)
 	roomtype = level.getChunk((i%5),(i/5))
 	replaceChunk(next_room,roomtype,h)
+	return next_room
 
 def placeVerTunnel(row_num,h):
 	next_room = level.getChunk(2,2+row_num)
@@ -84,6 +86,14 @@ def convertRoom(room,h):
 	room.Blocks[7:9,15,4+h:6+h] = 98 # Ditto.
 	makeHole(room,h)
 
+#sets all signs in chunk to text
+def setSign(chunkX, chunkY, text=['','','','']):
+	chunk=level.getChunk(chunkX, chunkY)
+	for tileEntity in chunk.TileEntities:
+		if tileEntity["id"].value == "Sign":
+			for i in range(4):
+				tileEntity["Text{0}".format(i + 1)].value = text[i]
+
 def main():
 	current_row_number = 0
 	current_col_number = 0
@@ -92,11 +102,32 @@ def main():
 	current_row_number += 1
 	placeVerTunnel(current_row_number,height)
 	current_row_number += 1
-	for i in range(0,5):
-		placeNextRoom(current_row_number,random.random(),height)
+
+	maildata = getmail()
+	for i, thread in enumerate(maildata):
+		if i==3:
+			break
+		#T-room
+		makeHole(placeNextRoom(current_col_number,current_row_number, random.random(), height), height)
+		current_col_number += 1
+		#setSign(current_col_number, current_row_number, ['1','2','3','4'])
+		for ii, message in enumerate(thread):
+			if i==3:
+				break
+
+			placeHorizTunnel(current_col_number,current_row_number,height)
+			current_col_number += 1
+			convertRoom(placeNextRoom(current_col_number, current_row_number, random.random(), height),height)
+			current_col_number += 1
 		current_row_number += 1
 		placeVerTunnel(current_row_number,height)
 		current_row_number += 1
+	#for i in range(0,5):
+		#placeNextRoom(current_col_number,current_row_number,random.random(),height)
+		#current_row_number += 1
+		#placeVerTunnel(current_row_number,height)
+		#current_row_number += 1
+	#setSign(2,2, ['1','2','3','4'])
 	level.saveInPlace()
 
 if __name__ == "__main__":
