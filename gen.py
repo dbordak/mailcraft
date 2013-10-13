@@ -1,4 +1,4 @@
-from pymclevel import mclevel
+from pymclevel import mclevel, nbt
 from getmail import *
 import random
 
@@ -24,6 +24,11 @@ def pickIndex(seed):
 	random.seed(seed)
 	return random.randint(2,5)
 
+def deleteChunk(chunk):
+	chunk.Blocks[:,:,:]=0
+	chunk.Data[:,:,:]=0
+	chunk.chunkChanged()
+	
 def replaceChunk(replacee,replacer,h):
 	replacee.Blocks[:,:,3+h:] = replacer.Blocks[:,:,3:256-h]
 	replacee.Data[:,:,3+h:] = replacer.Data[:,:,3:256-h]
@@ -35,8 +40,12 @@ def deepCopy(replacee,replacer):
 	replacee.chunkChanged()
 
 def placeFirstRoom(row_num):
-	next_room = level.getChunk(0,0+row_num)
+	next_room = level.getChunk(0,row_num)
 	deepCopy(next_room,start_block)
+
+def placeLastRoom(row_num,h):
+	next_room = level.getChunk(0,row_num)
+	replaceChunk(next_room,end_room,h)
 
 def placeNextRoom(col_num,row_num,seed,h):
 	next_room = level.getChunk(col_num,row_num)
@@ -75,7 +84,12 @@ def convertRoom(room,h):
 
 def theFloorIsLava(room,h):
 	room.Blocks[:,:,2+h:4+h] = 98 # Create retaining area
-	room.Blocks[1:15,1:15,3+h] = 10 # Add lava
+	room.Blocks[1:15,2:14,3+h] = 10 # Add lava
+	room.chunkChanged()
+
+def noFloor(room,h):
+	room.Blocks[:,:,:4+h] = 98 # Create walls
+	room.Blocks[1:15,2:14,:4+h] = 0 # Remove floor
 	room.chunkChanged()
 
 #sets all signs in chunk to text
@@ -102,13 +116,45 @@ def main():
 	print 'Fetching mail...'
 	maildata = getmail()
 	print 'Mail fetched. Building world...'
+
 	for i, thread in enumerate(maildata):
-		if i==12:
+		if i==7:
 			break
 
-		placeVerTunnel(current_row_number,height)
+		if i==4 or i==8:
+			height = increaseHeight(current_row_number,height)
+		else:
+			placeVerTunnel(current_row_number,height)
 		#level.saveInPlace()
-		#setSign(2+current_col_number, 2+current_row_number, ['ffff','hh','',''])
+		#setSign(current_col_number, current_row_number, ['ffff','hh','',''])
+		point=[6, 5, 30+32*i]
+		tileEntity = level.tileEntityAt(6, 5, 30+32*i)
+
+		linekeys = ["Text" + str(k) for k in range(1, 5)]
+
+		if not tileEntity:
+			tileEntity = nbt.TAG_Compound()
+			tileEntity["id"] = nbt.TAG_String("Sign")
+			tileEntity["x"] = nbt.TAG_Int(point[0])
+			tileEntity["y"] = nbt.TAG_Int(point[1])
+			tileEntity["z"] = nbt.TAG_Int(point[2])
+			for l in linekeys:
+				tileEntity[l] = nbt.TAG_String("")
+
+		level.addTileEntity(tileEntity)
+		level.getChunk(current_col_number,current_row_number).chunkChanged()
+
+		print thread
+
+		subject ="Untitled"
+		fro = ""
+		if thread:
+			subject = thread[0]['subject'][:15]
+			fro = thread[0]['from'][:15]
+		setSign(current_col_number,current_row_number, [subject,fro,'',''])
+		level.getChunk(current_col_number,current_row_number).chunkChanged()
+
+
 		current_row_number += 1
 		#T-room
 		original_col_number=current_col_number
@@ -116,7 +162,7 @@ def main():
 		current_col_number += 1
 		#setSign(current_col_number, current_row_number, ['1','2','3','4'])
 		for ii, message in enumerate(thread):
-			if i==5:
+			if ii==7:
 				break
 
 			placeHorizTunnel(current_col_number,current_row_number,height)
@@ -124,9 +170,17 @@ def main():
 			convertRoom(placeNextRoom(current_col_number, current_row_number, random.random(), height),height)
 			current_col_number += 1
 		#TODO add treasure room
+		if i%2==1:
+			r = level.getChunk(0,current_row_number)
+			if height<16:
+				theFloorIsLava(r,height)
+			else:
+				noFloor(r,height)
 		current_row_number += 1
 		current_col_number=original_col_number
-		
+	height = increaseHeight(current_row_number,height)
+	current_row_number +=1
+	placeLastRoom(current_row_number,height)
 	#for i in range(0,5):
 		#placeNextRoom(current_col_number,current_row_number,random.random(),height)
 		#current_row_number += 1
