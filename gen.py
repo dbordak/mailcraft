@@ -92,6 +92,15 @@ def noFloor(room,h):
 	room.Blocks[1:15,2:14,:4+h] = 0 # Remove floor
 	room.chunkChanged()
 
+def floorPuzzle(room,h,dangerBlock,diff):
+	for i in range(2,14):
+		for j in range(1,15):
+			k = random.randint(0,diff)
+			if k == 0:
+				room.Blocks[j,i,3+h] = 1
+			else:
+				room.Blocks[j,i,3+h] = dangerBlock
+
 #sets all signs in chunk to text
 def setSign(chunkX, chunkY, text=['','','','']):
 	print chunkX
@@ -120,7 +129,7 @@ def main():
 	print maildata
 
 	for i, thread in enumerate(maildata):
-		if i==7:
+		if i==12:
 			break
 
 		if i==4 or i==8:
@@ -176,8 +185,11 @@ def main():
 			r = level.getChunk(0,current_row_number)
 			if height<16:
 				theFloorIsLava(r,height)
+				dangerBlock = 10
 			else:
 				noFloor(r,height)
+				dangerBlock = 0
+			floorPuzzle(r,height,dangerBlock,(height/8)+1)
 		current_row_number += 1
 		current_col_number=original_col_number
 	height = increaseHeight(current_row_number,height)
