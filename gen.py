@@ -108,9 +108,9 @@ def setSign(chunkX, chunkY, text=['','','','']):
 	chunk=level.getChunk(chunkX, chunkY)
 	for tileEntity in chunk.TileEntities:
 		print tileEntity
-		if tileEntity["id"].value == "Sign":
-			for i in range(4):
-				tileEntity["Text{0}".format(i + 1)].value = text[i]
+		#if tileEntity["id"].value == "Sign":
+			#for i in range(4):
+				#tileEntity["Text{0}".format(i + 1)].value = text[i]
 
 def main():
 	level.createChunk(1,0)
@@ -136,10 +136,12 @@ def main():
 			height = increaseHeight(current_row_number,height)
 		else:
 			placeVerTunnel(current_row_number,height)
+
+		placeVerTunnel(current_row_number,height)
 		#level.saveInPlace()
-		#setSign(current_col_number, current_row_number, ['ffff','hh','',''])
-		point=[6, 5, 30+32*i]
-		tileEntity = level.tileEntityAt(6, 5, 30+32*i)
+		setSign(current_col_number, current_row_number)
+		point=[6, 5+(int)(i/4)*8, 30+32*i]
+		tileEntity = level.tileEntityAt(6, 5+(int)(i/4)*8, 30+32*i)
 
 		linekeys = ["Text" + str(k) for k in range(1, 5)]
 
@@ -152,24 +154,24 @@ def main():
 			for l in linekeys:
 				tileEntity[l] = nbt.TAG_String("")
 
-		level.addTileEntity(tileEntity)
-		level.getChunk(current_col_number,current_row_number).chunkChanged()
-
-		print thread
-
-		subject ="Untitled"
+		subject ="Draft"
 		fro = ""
 		if thread:
 			subject = thread[0]['subject'][:15]
 			fro = thread[0]['from'][:15]
-		setSign(current_col_number,current_row_number, [subject,fro,'',''])
-		level.getChunk(current_col_number,current_row_number).chunkChanged()
+		tileEntity[linekeys[0]] = subject
+		tileEntity[linekeys[1]] = fro
 
+		level.addTileEntity(tileEntity)
+		level.getChunk(current_col_number,current_row_number).chunkChanged()
 
 		current_row_number += 1
 		#T-room
 		original_col_number=current_col_number
-		makeHole(placeNextRoom(current_col_number,current_row_number, random.random(), height), height)
+		if len(thread)>1: #no openings on single rooms
+			makeHole(placeNextRoom(current_col_number,current_row_number, random.random(), height), height)
+		else:
+			placeNextRoom(current_col_number,current_row_number, random.random(), height)
 		current_col_number += 1
 		#setSign(current_col_number, current_row_number, ['1','2','3','4'])
 		for ii, message in enumerate(thread):
