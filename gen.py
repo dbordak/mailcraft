@@ -181,6 +181,16 @@ def main():
 			placeHorizTunnel(current_col_number,current_row_number,height)
 			current_col_number += 1
 			convertRoom(placeNextRoom(current_col_number, current_row_number, random.random(), height),height)
+#			if current_col_number%2==1:
+			r = level.getChunk(current_col_number,current_row_number)
+			if height<16:
+				theFloorIsLava(r,height)
+				dangerBlock = 10
+			else:
+				noFloor(r,height)
+				dangerBlock = 0
+			floorPuzzle(r,height,dangerBlock,(height/8)+1)
+			
 			current_col_number += 1
 		#TODO add treasure room
 		if i%2==1:
