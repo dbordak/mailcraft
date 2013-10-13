@@ -90,6 +90,10 @@ def setSign(chunkX, chunkY, text=['','','','']):
 				tileEntity["Text{0}".format(i + 1)].value = text[i]
 
 def main():
+	level.createChunk(1,0)
+	if num_rooms>6:
+		level.createChunk(0,1)
+		level.createChunk(1,1)
 	current_row_number = 0
 	current_col_number = 0
 	height = 0
