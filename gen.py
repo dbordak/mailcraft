@@ -47,6 +47,14 @@ def placeLastRoom(row_num,h):
 	next_room = level.getChunk(0,row_num)
 	replaceChunk(next_room,end_room,h)
 
+def placeTreasureRoom(col_num, row_num, h):
+	next_room =level.getChunk(col_num, row_num)
+	replaceChunk(next_room,treasure_room_plain,h)
+
+def placeGaudyTreasureRoom(col_num, row_num, h):
+	next_room =level.getChunk(col_num, row_num)
+	replaceChunk(next_room,treasure_room_gaudy,h)
+
 def placeNextRoom(col_num,row_num,seed,h):
 	next_room = level.getChunk(col_num,row_num)
 	i = pickIndex(seed)
@@ -190,9 +198,15 @@ def main():
 				noFloor(r,height)
 				dangerBlock = 0
 			floorPuzzle(r,height,dangerBlock,(height/8)+1)
-			
+
 			current_col_number += 1
-		#TODO add treasure room
+		if current_col_number - original_col_number <5:
+			placeNextRoom(current_col_number, current_row_number, random.random(), height)
+		elif current_col_number - original_col_number <8:
+			placeTreasureRoom(current_col_number, current_row_number, height)
+		else:
+			placeGaudyTreasureRoom(current_col_number, current_row_number, height)
+
 		if i%2==1:
 			r = level.getChunk(0,current_row_number)
 			if height<16:
