@@ -37,6 +37,3 @@ def getmail():
         data.append(threaddata)
 
     return data
-
-if __name__ == '__main__':
-	mail()

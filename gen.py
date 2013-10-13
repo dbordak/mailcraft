@@ -1,37 +1,24 @@
-#from os import path
 from pymclevel import mclevel
-#from pymclevel.box import BoundingBox
 from getmail import *
 import random
 
-
-#fp = path.relpath("DungeonBase")
-#print fp
 level = mclevel.fromFile("DungeonBase/level.dat")
 
 #chunkpositions = list(level.allChunks)
 #print chunkpositions
 
-#box = BoundingBox(origin=[0,0,0],size=[16,256,16])
-start_block = level.getChunk(0,0)
+start_block = level.getChunk(5,1)
 v_tunnel = level.getChunk(1,0)
 #basic_room_1 = level.getChunk(2,0)
 #basic_room_2 = level.getChunk(3,0)
 #pillar_room = level.getChunk(4,0)
-#tall_room = level.getChunk(0,1)
+#tall_room = level.getChunk(5,0)
 stairs = level.getChunk(1,1)
 h_tunnel = level.getChunk(2,1)
-
-#ChunkIt = base.getChunkSlices(box)
-#ChunknItUp = copy.getChunkSlices(box)
-#for (chunk,slices,point) in ChunkIt:
-#	print "anything"
-#	for (c2,s2,p2) in ChunknItUp:
-#		c2.Blocks[s2] = chunk.Blocks[slices]
-#		c2.Data[s2]   = chunk.Data[slices]
-#		c2.chunkChanged()
-	#chunkC.Blocks[slices] = chunk.Blocks[slices]
-	#chunkC.Data[slices] = chunk.Data[slices]
+treasure_room_gaudy = level.getChunk(3,1)
+treasure_room_plain = level.getChunk(4,1)
+end_room = level.getChunk(6,1)
+# Big room is in 6,0; 7,0; and 7,1.
 
 def pickIndex(seed):
 	random.seed(seed)
@@ -48,26 +35,26 @@ def deepCopy(replacee,replacer):
 	replacee.chunkChanged()
 
 def placeFirstRoom(row_num):
-	next_room = level.getChunk(2,2+row_num)
+	next_room = level.getChunk(0,0+row_num)
 	deepCopy(next_room,start_block)
 
 def placeNextRoom(col_num,row_num,seed,h):
-	next_room = level.getChunk(2+col_num,2+row_num)
+	next_room = level.getChunk(col_num,row_num)
 	i = pickIndex(seed)
-	roomtype = level.getChunk((i%5),(i/5))
+	roomtype = level.getChunk(i,0)
 	replaceChunk(next_room,roomtype,h)
 	return next_room
 
 def placeVerTunnel(row_num,h):
-	next_room = level.getChunk(2,2+row_num)
+	next_room = level.getChunk(0,row_num)
 	replaceChunk(next_room,v_tunnel,h)
 
 def placeHorizTunnel(col_num,row_num,h):
-	next_room = level.getChunk(2+col_num,2+row_num)
+	next_room = level.getChunk(col_num,row_num)
 	replaceChunk(next_room,h_tunnel,h)
 
 def placeStair(row_num,h):
-	next_room = level.getChunk(2,2+row_num)
+	next_room = level.getChunk(0,row_num)
 	replaceChunk(next_room,stairs,h)
 
 def increaseHeight(row_num,h):
@@ -86,10 +73,18 @@ def convertRoom(room,h):
 	room.Blocks[7:9,15,4+h:6+h] = 98 # Ditto.
 	makeHole(room,h)
 
+def theFloorIsLava(room,h):
+	room.Blocks[:,:,2+h:4+h] = 98 # Create retaining area
+	room.Blocks[1:15,1:15,3+h] = 10 # Add lava
+	room.chunkChanged()
+
 #sets all signs in chunk to text
 def setSign(chunkX, chunkY, text=['','','','']):
+	print chunkX
+	print chunkY
 	chunk=level.getChunk(chunkX, chunkY)
 	for tileEntity in chunk.TileEntities:
+		print tileEntity
 		if tileEntity["id"].value == "Sign":
 			for i in range(4):
 				tileEntity["Text{0}".format(i + 1)].value = text[i]
@@ -100,44 +95,43 @@ def main():
 	height = 0
 	placeFirstRoom(current_row_number)
 	current_row_number += 1
-	placeVerTunnel(current_row_number,height)
-	current_row_number += 1
-
+	print 'Fetching mail...'
 	maildata = getmail()
+	print 'Mail fetched. Building world...'
 	for i, thread in enumerate(maildata):
-		if i==3:
+		if i==12:
 			break
+
+		placeVerTunnel(current_row_number,height)
+		#level.saveInPlace()
+		#setSign(2+current_col_number, 2+current_row_number, ['ffff','hh','',''])
+		current_row_number += 1
 		#T-room
+		original_col_number=current_col_number
 		makeHole(placeNextRoom(current_col_number,current_row_number, random.random(), height), height)
 		current_col_number += 1
 		#setSign(current_col_number, current_row_number, ['1','2','3','4'])
 		for ii, message in enumerate(thread):
-			if i==3:
+			if i==5:
 				break
 
 			placeHorizTunnel(current_col_number,current_row_number,height)
 			current_col_number += 1
 			convertRoom(placeNextRoom(current_col_number, current_row_number, random.random(), height),height)
 			current_col_number += 1
+		#TODO add treasure room
 		current_row_number += 1
-		placeVerTunnel(current_row_number,height)
-		current_row_number += 1
+		current_col_number=original_col_number
+		
 	#for i in range(0,5):
 		#placeNextRoom(current_col_number,current_row_number,random.random(),height)
 		#current_row_number += 1
 		#placeVerTunnel(current_row_number,height)
 		#current_row_number += 1
 	#setSign(2,2, ['1','2','3','4'])
+	print 'Built. Saving...'
 	level.saveInPlace()
+	print 'Done!'
 
 if __name__ == "__main__":
 	main()
-
-
-#for chunk in chunkpositions:
-#	print chunk
-#	b = level.getChunk(chunk[0],chunk[1])
-#	ChunkIt = b.getChunkSlices(box)
-#	for (c2, slices, point) in ChunkIt:
-#		print c2.Blocks[slices]
-#		print c2.Data[slices]
