@@ -117,6 +117,8 @@ def main():
 	maildata = getmail()
 	print 'Mail fetched. Building world...'
 
+	print maildata
+
 	for i, thread in enumerate(maildata):
 		if i==7:
 			break
