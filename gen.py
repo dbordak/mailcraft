@@ -18,7 +18,8 @@ v_tunnel = level.getChunk(1,0)
 #basic_room_2 = level.getChunk(3,0)
 #pillar_room = level.getChunk(4,0)
 #tall_room = level.getChunk(0,1)
-d_stairs = level.getChunk(1,1)
+stairs = level.getChunk(1,1)
+h_tunnel = level.getChunk(2,1)
 
 #ChunkIt = base.getChunkSlices(box)
 #ChunknItUp = copy.getChunkSlices(box)
@@ -45,44 +46,57 @@ def deepCopy(replacee,replacer):
 	replacee.Data[:,:,:] = replacer.Data[:,:,:]
 	replacee.chunkChanged()
 
-def placeFirstRoom(room_num):
-	next_room = level.getChunk(2,2+room_num)
+def placeFirstRoom(row_num):
+	next_room = level.getChunk(2,2+row_num)
 	deepCopy(next_room,start_block)
 
-def placeNextRoom(room_num,seed,h):
-	next_room = level.getChunk(2,2+room_num)
+def placeNextRoom(row_num,seed,h):
+	next_room = level.getChunk(2,2+row_num)
 	i = pickIndex(seed)
 	roomtype = level.getChunk((i%5),(i/5))
 	replaceChunk(next_room,roomtype,h)
 
-def placeTunnel(room_num,h):
-	next_room = level.getChunk(2,2+room_num)
+def placeVerTunnel(row_num,h):
+	next_room = level.getChunk(2,2+row_num)
 	replaceChunk(next_room,v_tunnel,h)
 
-def placeStair(room_num,h):
-	next_room = level.getChunk(2,2+room_num)
-	replaceChunk(next_room,d_stairs,h)
+def placeHorizTunnel(col_num,row_num,h):
+	next_room = level.getChunk(2+col_num,2+row_num)
+	replaceChunk(next_room,h_tunnel,h)
 
-def increaseHeight(room_num,h):
-	placeStair(room_num,h)
+def placeStair(row_num,h):
+	next_room = level.getChunk(2,2+row_num)
+	replaceChunk(next_room,stairs,h)
+
+def increaseHeight(row_num,h):
+	placeStair(row_num,h)
 	return h+8
 
 def makeHole(room,h):
-	room.Blocks[15,7:8,4+h:6+h] = 0 #Air?
-	room.Blocks[15,7:8,3+h] = 1 #Cobblestone?
+	room.Blocks[15,7:9,4+h:6+h] = 0 # Remove square-shaped hole
+	room.Blocks[15,7:9,3+h] = 4     # Replace floor with cobblestone
+	room.chunkChanged()
+
+def convertRoom(room,h):
+	room.Blocks[0,7:9,4+h:6+h] = 0 # Same as makeHole, but on the left side
+	room.Blocks[0,7:9,3+h] = 4     # Ditto.
+	room.Blocks[7:9,0,4+h:6+h] = 98  # Fill doorway in with stone bricks
+	room.Blocks[7:9,15,4+h:6+h] = 98 # Ditto.
+	makeHole(room,h)
 
 def main():
-	current_room_number = 0
+	current_row_number = 0
+	current_col_number = 0
 	height = 0
-	placeFirstRoom(current_room_number)
-	current_room_number += 1
-	placeTunnel(current_room_number,height)
-	current_room_number += 1
+	placeFirstRoom(current_row_number)
+	current_row_number += 1
+	placeVerTunnel(current_row_number,height)
+	current_row_number += 1
 	for i in range(0,5):
-		placeNextRoom(current_room_number,random.random(),height)
-		current_room_number += 1
-		placeTunnel(current_room_number,height)
-		current_room_number += 1
+		placeNextRoom(current_row_number,random.random(),height)
+		current_row_number += 1
+		placeVerTunnel(current_row_number,height)
+		current_row_number += 1
 	level.saveInPlace()
 
 if __name__ == "__main__":
