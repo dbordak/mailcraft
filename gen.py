@@ -1,3 +1,5 @@
+#!/bin/python2
+
 from pymclevel import mclevel, nbt
 from getmail import *
 import random
