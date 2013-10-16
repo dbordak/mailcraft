@@ -6,9 +6,6 @@ import random
 
 level = mclevel.fromFile("DungeonBase/level.dat")
 
-#chunkpositions = list(level.allChunks)
-#print chunkpositions
-
 start_block = level.getChunk(5,1)
 v_tunnel = level.getChunk(1,0)
 #basic_room_1 = level.getChunk(2,0)
@@ -178,10 +175,14 @@ def main():
 		current_row_number += 1
 		#T-room
 		original_col_number=current_col_number
-		if len(thread)>1: #no openings on single rooms
-			makeHole(placeNextRoom(current_col_number,current_row_number, random.random(), height), height)
+		if len(fro):
+			seed = fro
 		else:
-			placeNextRoom(current_col_number,current_row_number, random.random(), height)
+			seed = random.random()
+		if len(thread)>1: #no openings on single rooms
+			makeHole(placeNextRoom(current_col_number,current_row_number, seed, height), height)
+		else:
+			placeNextRoom(current_col_number,current_row_number, seed, height)
 		current_col_number += 1
 		#setSign(current_col_number, current_row_number, ['1','2','3','4'])
 		for ii, message in enumerate(thread):
@@ -190,7 +191,7 @@ def main():
 
 			placeHorizTunnel(current_col_number,current_row_number,height)
 			current_col_number += 1
-			convertRoom(placeNextRoom(current_col_number, current_row_number, random.random(), height),height)
+			convertRoom(placeNextRoom(current_col_number, current_row_number, seed, height),height)
 #			if current_col_number%2==1:
 			r = level.getChunk(current_col_number,current_row_number)
 			if height<16:
@@ -203,7 +204,7 @@ def main():
 
 			current_col_number += 1
 		if current_col_number - original_col_number <5:
-			placeNextRoom(current_col_number, current_row_number, random.random(), height)
+			placeNextRoom(current_col_number, current_row_number, seed, height)
 		elif current_col_number - original_col_number <8:
 			placeTreasureRoom(current_col_number, current_row_number, height)
 		else:
