@@ -137,7 +137,7 @@ def main():
 	print maildata
 
 	for i, thread in enumerate(maildata):
-		if i==12:
+		if i==10:
 			break
 
 		if i==4 or i==8:
