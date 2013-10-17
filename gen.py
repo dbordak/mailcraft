@@ -3,59 +3,53 @@
 from pymclevel import mclevel, nbt
 from getmail import *
 import random
-import os
+from os import path
 import shutil
 
 # TODO:
-# * Move all instances of "level" out of helper functions -- work on room references, instead.
-# * Replace makeHole, unmakeHole, and convertRoom to a general-purpose doorway-maker.
-# * Add more roomtypes (other than jumping puzzle)
-# * Change pillar_room from a map object to a function
+# * Add more roomtypes (other than jumping puzzles).
+# * Change pillar_room from a map object to a function.
+#  * Maybe also same thing with tall_room
+# * Change SetExits so that it can add, remove, or ignore exits -- or so that it can add doors.
+# * Replace lava and pit with single dangerous room function.
+# * Rotated dangerfloors for message threads.
 
+HEIGHT_INC  = 8
+STONE_BRICK = 98
 
-blockLevel = mclevel.fromFile(os.path.join("DungeonBlocks","level.dat"))
+V_EASY = 0
+EASY = 1
+MEDIUM = 2
+HARD = 3
+V_HARD = 5
 
-rooms = {
-		"start"    : blockLevel.getChunk(5,1),
-		"v_tunnel" : blockLevel.getChunk(1,0),
-		"basic"    : blockLevel.getChunk(2,0),
-		"basic2"   : blockLevel.getChunk(3,0),
-		"pillar"   : blockLevel.getChunk(4,0),
-		"tall"     : blockLevel.getChunk(5,0),
-		"stairs"   : blockLevel.getChunk(1,1),
-		"h_tunnel" : blockLevel.getChunk(2,1),
-		"treasure" : blockLevel.getChunk(4,1),
-		"gaudy"    : blockLevel.getChunk(3,1),
-		"end"      : blockLevel.getChunk(6,1)
-		}
-# Big room is in 6,0; 7,0; and 7,1.
+SHORT = 7
+NORMAL = 12
+LONG = 20
+E_LONG = 30
 
 # Simple wrapper which returns the created chunk
 def makeChunk(world, col, row):
 	world.createChunk(col, row)
 	return world.getChunk(col, row)
 
-def deleteChunk(chunk):
+def wipeChunk(chunk):
 	chunk.Blocks[:,:,:]=0
 	chunk.Data[:,:,:]=0
 	chunk.chunkChanged()
 	return chunk
 	
-def roomCopy(fro,to,h):
+def roomCopy(fro, to, h):
 	to.Blocks[:,:,3+h:] = fro.Blocks[:,:,3:256-h]
 	to.Data[:,:,3+h:] = fro.Data[:,:,3:256-h]
 	to.chunkChanged()
 	return to
 
-def deepCopy(fro,to):
+def deepCopy(fro, to):
 	to.Blocks[:,:,:] = fro.Blocks[:,:,:]
 	to.Data[:,:,:] = fro.Data[:,:,:]
 	to.chunkChanged()
 	return to
-
-#def roomType(room_name, world):
-#	room_loc = rooms[room_name]
-#	return world.getChunk(room_loc[0],room_loc[1])
 
 def placeNextRoom(room, seed, h, roomArray):
 	random.seed(seed)
@@ -70,7 +64,7 @@ def makeHole(room, h):
 	return room
 
 def unmakeHole(room, h):
-	room.Blocks[15,7:9,4+h:6+h] = 98
+	room.Blocks[15,7:9,4+h:6+h] = STONE_BRICK
 	room.chunkChanged()
 	return room
 
@@ -78,19 +72,19 @@ def setExits(room, h, left, right, top, bottom):
 	if left:
 		l_block = 0
 	else:
-		l_block = 98
+		l_block = STONE_BRICK
 	if right:
 		r_block = 0
 	else:
-		r_block = 98
+		r_block = STONE_BRICK
 	if top:
 		t_block = 0
 	else:
-		t_block = 98
+		t_block = STONE_BRICK
 	if bottom:
 		b_block = 0
 	else:
-		b_block = 98
+		b_block = STONE_BRICK
 	floor_mat = 4
 	floor = 3+h
 
@@ -108,15 +102,23 @@ def setExits(room, h, left, right, top, bottom):
 	room.chunkChanged()
 	return room
 
+def dangerFloor(room, h, dangerBlock, difficulty):
+	room.Blocks[:,:,:4+h] = STONE_BRICK
+	room.Blocks[1:15,2:14,:4+h] = dangerBlock
+	room.ChunkChanged()
+	return room
+
 def theFloorIsLava(room, h):
-	room.Blocks[:,:,2+h:4+h] = 98 # Create retaining area
+	room.Blocks[:,:,2+h:4+h] = STONE_BRICK # Create retaining area
 	room.Blocks[1:15,2:14,3+h] = 10 # Add lava
 	room.chunkChanged()
+	return room
 
 def noFloor(room, h):
-	room.Blocks[:,:,:4+h] = 98 # Create walls
+	room.Blocks[:,:,:4+h] = STONE_BRICK # Create walls
 	room.Blocks[1:15,2:14,:4+h] = 0 # Remove floor
 	room.chunkChanged()
+	return room
 
 def floorPuzzle(room, h, dangerBlock, diff):
 	for i in range(2,14):
@@ -126,6 +128,14 @@ def floorPuzzle(room, h, dangerBlock, diff):
 				room.Blocks[j,i,3+h] = 1
 			else:
 				room.Blocks[j,i,3+h] = dangerBlock
+
+def makePillar(room):
+	room.Blocks[3:5,3:5,:] = STONE_BRICK
+	room.Blocks[3:5,11:13,:] = STONE_BRICK
+	room.Blocks[11:13,3:5,:] = STONE_BRICK
+	room.Blocks[11:13,11:13,:] = STONE_BRICK
+	room.chunkChanged()
+	return room
 
 #sets all signs in chunk to text
 def setSign(room, text=['','','','']):
@@ -137,40 +147,35 @@ def setSign(room, text=['','','','']):
 	return room
 
 def main():
-	shutil.copytree("DungeonBase","Dungeon")
-
-	## This clears the base map of anything but template chunks
-	#chunkPositions = list(baseLevel.allChunks)
-	#for x,z in chunkPositions:
-	#	if z==0 or z==1:
-	#		if x>0 and x<8:
-	#			continue
-	#	deleteChunk(baseLevel.getChunk(x,z))
-	#
-	#baseLevel.saveInPlace()
+	shutil.copytree("DungeonBase", "Dungeon")
 	
-	start_block = rooms["start"]  #roomType("start", baseLevel)
-	v_tunnel = rooms["v_tunnel"] #roomType("v_tunnel", baseLevel)
-	h_tunnel = rooms["h_tunnel"] #roomType("h_tunnel", baseLevel)
-	stairs = rooms["stairs"] #roomType("stairs", baseLevel)
-	basic_room_1 = rooms["basic"] #roomType("basic", baseLevel)
-	basic_room_2 = rooms["basic2"] #roomType("basic2", baseLevel)
-	pillar_room = rooms["pillar"] #roomType("pillar", baseLevel)
-	tall_room = rooms["tall"] #roomType("tall", baseLevel)
-	treasure_room_gaudy = rooms["gaudy"] #roomType("gaudy", baseLevel)
-	treasure_room_plain = rooms["treasure"] #roomType("treasure", baseLevel)
-	end_room = rooms["end"] #roomType("end", baseLevel)
-
-	room_sel = [basic_room_1, basic_room_2, pillar_room, tall_room]
-
-	level = mclevel.fromFile(os.path.join("Dungeon","level.dat"))
+	blockLevel = mclevel.fromFile(path.join("DungeonBlocks", "level.dat"))
 	
-	current_row_number = 0
-	current_col_number = 0
+	rooms = {
+			"start"    : blockLevel.getChunk(0,0),
+			"v_tunnel" : blockLevel.getChunk(0,1),
+			"basic"    : blockLevel.getChunk(0,2),
+			"basic2"   : blockLevel.getChunk(1,2),
+			#"pillar"   : blockLevel.getChunk(4,0),
+			#"tall"     : blockLevel.getChunk(5,0),
+			"stairs"   : blockLevel.getChunk(1,1),
+			"h_tunnel" : blockLevel.getChunk(2,1),
+			"treasure" : blockLevel.getChunk(3,0),
+			"gaudy"    : blockLevel.getChunk(4,0),
+			"end"      : blockLevel.getChunk(2,0)
+			}
+	# Big room is in 6,0; 7,0; and 7,1.
+
+	room_sel = [rooms["basic"], rooms["basic2"]] #, rooms["pillar"], rooms["tall"]]
+
+	level = mclevel.fromFile(path.join("Dungeon", "level.dat"))
+	
+	row_num = 0
+	col_num = 0
 	height = 0
 	
-	deepCopy(start_block,makeChunk(level, current_col_number,current_row_number))
-	current_row_number += 1
+	deepCopy(rooms["start"], makeChunk(level, col_num, row_num))
+	row_num += 1
 	
 	print 'Fetching mail...'
 	maildata = getmail()
@@ -178,22 +183,16 @@ def main():
 	#print maildata
 
 	for i, thread in enumerate(maildata):
-		if i==10:
+		if i==20:
 			break
 
 		if i==4 or i==8:
-			height = increaseHeight(current_row_number,height)
+			height = increaseHeight(row_num,height)
 		else:
-			placeVerTunnel(current_row_number,height)
+			placeVerTunnel(row_num,height)
 
-		r = roomCopy(v_tunnel, makeChunk(level, 0, current_row_number), height)
-		#level.saveInPlace()
-		#print current_col_number
-		#print current_row_number
-		#r = setSign(level.getChunk(current_col_number,current_row_number))
-		#r = level.makeChunk(current_col_number,current_row_number)
-		point=[6, 5+(int)(i/4)*8, 30+32*i]
-		tileEntity = level.tileEntityAt(6, 5+(int)(i/4)*8, 30+32*i)
+		point=[6, 5+(int)(i/4)*HEIGHT_INC, 30+32*i]
+		tileEntity = level.tileEntityAt(6, 5+(int)(i/4)*HEIGHT_INC, 30+32*i)
 
 		linekeys = ["Text" + str(k) for k in range(1, 5)]
 
@@ -216,64 +215,64 @@ def main():
 
 		level.addTileEntity(tileEntity)
 		r.chunkChanged()
-
-		if i==4 or i==8:
-			roomCopy(stairs, r, height)#makeChunk(level, 0, current_row_number), height)
-			height += 8
+		
+		if i==5 or i==10 or i==15:
+			roomCopy(rooms["stairs"], r, height)
+			height += HEIGHT_INC
 		else:
-			roomCopy(v_tunnel, r, height)#makeChunk(level, 0,current_row_number), height)
-		#setSign(level.getChunk(2+current_col_number, 2+current_row_number), ['ffff','hh','',''])
-		current_row_number += 1
+			roomCopy(rooms["v_tunnel"], r, height)
+		#setSign(level.getChunk(2+col_num, 2+row_num), ['ffff','hh','',''])
+		row_num += 1
 		#T-room
-		original_col_number=current_col_number
+		original_col_number=col_num
 		if len(fro):
 			seed = fro
 		else:
 			seed = random.random()
+		r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
 		if len(thread)>1: #no openings on single rooms
-			makeHole(placeNextRoom(makeChunk(level, current_col_number, current_row_number), seed, height, room_sel), height)
-		else:
-			placeNextRoom(makeChunk(level, current_col_number, current_row_number), seed, height, room_sel)
-		current_col_number += 1
-		#setSign(level.getChunk(current_col_number, current_row_number), ['1','2','3','4'])
+			makeHole(r, height)
+		col_num += 1
+		#setSign(level.getChunk(col_num, row_num), ['1','2','3','4'])
 		for ii, message in enumerate(thread):
-			if ii==7:
+			if ii==12:
 				break
 
-			roomCopy(h_tunnel, makeChunk(level, current_col_number, current_row_number), height)
-			current_col_number += 1
-			r = setExits(placeNextRoom(makeChunk(level, current_col_number, current_row_number), seed, height, room_sel), height, True, True, False, False)
-			if height<16:
-				theFloorIsLava(r,height)
+			roomCopy(rooms["h_tunnel"], makeChunk(level, col_num, row_num), height)
+			col_num += 1
+			r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
+			setExits(r, height, True, True, False, False)
+			if height<24:
+				theFloorIsLava(r, height)
 				dangerBlock = 10
 			else:
-				noFloor(r,height)
+				noFloor(r, height)
 				dangerBlock = 0
-			floorPuzzle(r,height,dangerBlock,(height/8)+1)
+			floorPuzzle(r, height, dangerBlock, (height/HEIGHT_INC)+1)
 
-			current_col_number += 1
-		r = makeChunk(level, current_col_number, current_row_number)
-		if current_col_number - original_col_number <5:
-			unmakeHole(level.getChunk(current_col_number - 1, current_row_number), height)
-		elif current_col_number - original_col_number <8:
-			roomCopy(treasure_room_plain, r, height)
+			col_num += 1
+		r = makeChunk(level, col_num, row_num)
+		if col_num - original_col_number <5:
+			unmakeHole(level.getChunk(col_num - 1, row_num), height)
+		elif col_num - original_col_number <8:
+			roomCopy(rooms["treasure"], r, height)
 		else:
-			roomCopy(treasure_room_gaudy, r, height)
+			roomCopy(rooms["gaudy"], r, height)
 		if i%2==1:
-			r = level.getChunk(0, current_row_number)
+			r = level.getChunk(0, row_num)
 			if height<16:
 				theFloorIsLava(r,height)
 				dangerBlock = 10
 			else:
 				noFloor(r,height)
 				dangerBlock = 0
-			floorPuzzle(r,height,dangerBlock,(height/8)+1)
-		current_row_number += 1
-		current_col_number=original_col_number
-	roomCopy(stairs, makeChunk(level, 0, current_row_number), height)
-	height += 8
-	current_row_number +=1
-	roomCopy(end_room, makeChunk(level, current_col_number, current_row_number), height)
+			floorPuzzle(r,height,dangerBlock,(height/HEIGHT_INC)+1)
+		row_num += 1
+		col_num=original_col_number
+	roomCopy(rooms["stairs"], makeChunk(level, 0, row_num), height)
+	height += HEIGHT_INC
+	row_num +=1
+	roomCopy(rooms["end"], makeChunk(level, col_num, row_num), height)
 
 	print 'Built. Saving...'
 	level.saveInPlace()
