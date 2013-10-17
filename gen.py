@@ -12,18 +12,21 @@ import shutil
 # * Add more roomtypes (other than jumping puzzle)
 # * Change pillar_room from a map object to a function
 
+
+blockLevel = mclevel.fromFile(os.path.join("DungeonBlocks","level.dat"))
+
 rooms = {
-		"start"    : [5,1],
-		"v_tunnel" : [1,0],
-		"basic"    : [2,0],
-		"basic2"   : [3,0],
-		"pillar"   : [4,0],
-		"tall"     : [5,0],
-		"stairs"   : [1,1],
-		"h_tunnel" : [2,1],
-		"treasure" : [4,1],
-		"gaudy"    : [3,1],
-		"end"      : [6,1]
+		"start"    : blockLevel.getChunk(5,1),
+		"v_tunnel" : blockLevel.getChunk(1,0),
+		"basic"    : blockLevel.getChunk(2,0),
+		"basic2"   : blockLevel.getChunk(3,0),
+		"pillar"   : blockLevel.getChunk(4,0),
+		"tall"     : blockLevel.getChunk(5,0),
+		"stairs"   : blockLevel.getChunk(1,1),
+		"h_tunnel" : blockLevel.getChunk(2,1),
+		"treasure" : blockLevel.getChunk(4,1),
+		"gaudy"    : blockLevel.getChunk(3,1),
+		"end"      : blockLevel.getChunk(6,1)
 		}
 # Big room is in 6,0; 7,0; and 7,1.
 
@@ -52,7 +55,7 @@ def deepCopy(fro,to):
 
 def roomType(room_name, world):
 	room_loc = rooms[room_name]
-	return makeChunk(world, room_loc[0],room_loc[1])
+	return world.getChunk(room_loc[0],room_loc[1])
 
 def placeNextRoom(room, seed, h, roomArray):
 	random.seed(seed)
@@ -135,7 +138,6 @@ def setSign(room, text=['','','','']):
 
 def main():
 	shutil.copytree("DungeonBase","Dungeon")
-	baseLevel = mclevel.fromFile(os.path.join("DungeonBase","level.dat"))
 
 	## This clears the base map of anything but template chunks
 	#chunkPositions = list(baseLevel.allChunks)
@@ -147,17 +149,17 @@ def main():
 	#
 	#baseLevel.saveInPlace()
 	
-	start_block = roomType("start", baseLevel)
-	v_tunnel = roomType("v_tunnel", baseLevel)
-	h_tunnel = roomType("h_tunnel", baseLevel)
-	stairs = roomType("stairs", baseLevel)
-	basic_room_1 = roomType("basic", baseLevel)
-	basic_room_2 = roomType("basic2", baseLevel)
-	pillar_room = roomType("pillar", baseLevel)
-	tall_room = roomType("tall", baseLevel)
-	treasure_room_gaudy = roomType("gaudy", baseLevel)
-	treasure_room_plain = roomType("treasure", baseLevel)
-	end_room = roomType("end", baseLevel)
+	start_block = rooms["start"]  #roomType("start", baseLevel)
+	v_tunnel = rooms["v_tunnel"] #roomType("v_tunnel", baseLevel)
+	h_tunnel = rooms["h_tunnel"] #roomType("h_tunnel", baseLevel)
+	stairs = rooms["stairs"] #roomType("stairs", baseLevel)
+	basic_room_1 = rooms["basic"] #roomType("basic", baseLevel)
+	basic_room_2 = rooms["basic2"] #roomType("basic2", baseLevel)
+	pillar_room = rooms["pillar"] #roomType("pillar", baseLevel)
+	tall_room = rooms["tall"] #roomType("tall", baseLevel)
+	treasure_room_gaudy = rooms["gaudy"] #roomType("gaudy", baseLevel)
+	treasure_room_plain = rooms["treasure"] #roomType("treasure", baseLevel)
+	end_room = rooms["end"] #roomType("end", baseLevel)
 
 	room_sel = [basic_room_1, basic_room_2, pillar_room, tall_room]
 
