@@ -13,20 +13,17 @@ import shutil
 # * Change SetExits so that it can add, remove, or ignore exits -- or so that it can add doors.
 # * Replace lava and pit with single dangerous room function.
 # * Rotated dangerfloors for message threads.
+# * Fix sign-laying function.
+# * Alternate route in case of impossible jumping puzzle.
+# * Color-coded treasure rooms.
+# * Improve readability of setExits.
+# * Switch ordering of main loop (rooms before tunnels).
 
 HEIGHT_INC  = 8
 STONE_BRICK = 98
 
-V_EASY = 0
-EASY = 1
-MEDIUM = 2
-HARD = 3
-V_HARD = 5
-
-SHORT = 7
-NORMAL = 12
-LONG = 20
-E_LONG = 30
+difficulty = [1, 2, 3, 4, 5, 7]
+length = [7, 12, 20, 30, -1]
 
 # Simple wrapper which returns the created chunk
 def makeChunk(world, col, row):
@@ -55,54 +52,56 @@ def placeNextRoom(room, seed, h, roomArray):
 	random.seed(seed)
 	i = random.randint(0,len(roomArray)-1)
 	roomCopy(roomArray[i], room, h)
+	j = random.randint(0,10)
+	if j==0:
+		makePillar(room)
+	#if j==1
+	#	makeTall(room)
 	return room
 
-def makeHole(room, h):
-	room.Blocks[15,7:9,4+h:6+h] = 0 # Remove square-shaped hole
-	room.Blocks[15,7:9,3+h] = 4     # Replace floor with cobblestone
-	room.chunkChanged()
-	return room
-
-def unmakeHole(room, h):
-	room.Blocks[15,7:9,4+h:6+h] = STONE_BRICK
-	room.chunkChanged()
-	return room
-
+# left, right, top, and bottom:
+# -1 = ignore
+# 0  = wall
+# 1  = door
 def setExits(room, h, left, right, top, bottom):
-	if left:
-		l_block = 0
-	else:
-		l_block = STONE_BRICK
-	if right:
-		r_block = 0
-	else:
-		r_block = STONE_BRICK
-	if top:
-		t_block = 0
-	else:
-		t_block = STONE_BRICK
-	if bottom:
-		b_block = 0
-	else:
-		b_block = STONE_BRICK
 	floor_mat = 4
 	floor = 3+h
+	if left>-1:
+		if left==1:
+			l_block = 0
+			room.Blocks[0,7:9,floor]  = floor_mat
+		else:
+			l_block = STONE_BRICK
+		room.Blocks[0,7:9,floor+1:floor+3]  = l_block
+	
+	if right>-1:
+		if right==1:
+			r_block = 0
+			room.Blocks[15,7:9,floor] = floor_mat
+		else:
+			r_block = STONE_BRICK
+		room.Blocks[15,7:9,floor+1:floor+3] = r_block
 
-	# Set doorways
-	room.Blocks[0,7:9,floor+1:floor+3]  = l_block
-	room.Blocks[15,7:9,floor+1:floor+3] = r_block
-	room.Blocks[7:9,0,floor+1:floor+3]  = t_block
-	room.Blocks[7:9,15,floor+1:floor+3] = b_block
+	if top>-1:
+		if top==1:
+			t_block = 0
+			room.Blocks[7:9,0,floor]  = floor_mat
+		else:
+			t_block = STONE_BRICK
+		room.Blocks[7:9,0,floor+1:floor+3]  = t_block
 
-	# Set floors
-	room.Blocks[0,7:9,floor]  = floor_mat
-	room.Blocks[15,7:9,floor] = floor_mat
-	room.Blocks[7:9,0,floor]  = floor_mat
-	room.Blocks[7:9,15,floor] = floor_mat
+	if bottom>-1:
+		if bottom==1:
+			b_block = 0
+			room.Blocks[7:9,15,floor] = floor_mat
+		else:
+			b_block = STONE_BRICK
+		room.Blocks[7:9,15,floor+1:floor+3] = b_block
+	
 	room.chunkChanged()
 	return room
 
-def dangerFloor(room, h, dangerBlock, difficulty):
+def dangerFloor(room, h, dangerBlock, current_difficulty):
 	room.Blocks[:,:,:4+h] = STONE_BRICK
 	room.Blocks[1:15,2:14,:4+h] = dangerBlock
 	room.ChunkChanged()
@@ -147,6 +146,9 @@ def setSign(room, text=['','','','']):
 	return room
 
 def main():
+	difficulty_setting = difficulty[3] # Range is 0 - 5
+	length_setting = length[2] # Range is 0 - 4
+	
 	shutil.copytree("DungeonBase", "Dungeon")
 	
 	blockLevel = mclevel.fromFile(path.join("DungeonBlocks", "level.dat"))
@@ -156,8 +158,6 @@ def main():
 			"v_tunnel" : blockLevel.getChunk(0,1),
 			"basic"    : blockLevel.getChunk(0,2),
 			"basic2"   : blockLevel.getChunk(1,2),
-			#"pillar"   : blockLevel.getChunk(4,0),
-			#"tall"     : blockLevel.getChunk(5,0),
 			"stairs"   : blockLevel.getChunk(1,1),
 			"h_tunnel" : blockLevel.getChunk(2,1),
 			"treasure" : blockLevel.getChunk(3,0),
@@ -166,7 +166,7 @@ def main():
 			}
 	# Big room is in 6,0; 7,0; and 7,1.
 
-	room_sel = [rooms["basic"], rooms["basic2"]] #, rooms["pillar"], rooms["tall"]]
+	room_sel = [rooms["basic"], rooms["basic2"]]
 
 	level = mclevel.fromFile(path.join("Dungeon", "level.dat"))
 	
@@ -183,7 +183,7 @@ def main():
 	#print maildata
 
 	for i, thread in enumerate(maildata):
-		if i==20:
+		if i==length_setting:
 			break
 
 		if i==4 or i==8:
@@ -191,8 +191,9 @@ def main():
 		else:
 			placeVerTunnel(row_num,height)
 
-		point=[6, 5+(int)(i/4)*HEIGHT_INC, 30+32*i]
-		tileEntity = level.tileEntityAt(6, 5+(int)(i/4)*HEIGHT_INC, 30+32*i)
+		point=[6, 5+(int)(i/5)*HEIGHT_INC, 30+32*i]
+		#point=[6, 5+height, 30+32*i] # Only works when not a staircase -- for now.
+		tileEntity = level.tileEntityAt(6, 5+(int)(i/5)*HEIGHT_INC, 30+32*i)
 
 		linekeys = ["Text" + str(k) for k in range(1, 5)]
 
@@ -216,7 +217,8 @@ def main():
 		level.addTileEntity(tileEntity)
 		r.chunkChanged()
 		
-		if i==5 or i==10 or i==15:
+		diffInterval = int(length_setting/difficulty_setting)
+		if i%diffInterval==0 and i!=0 and i!=length_setting:
 			roomCopy(rooms["stairs"], r, height)
 			height += HEIGHT_INC
 		else:
@@ -230,18 +232,17 @@ def main():
 		else:
 			seed = random.random()
 		r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
-		if len(thread)>1: #no openings on single rooms
-			makeHole(r, height)
+		if len(thread)>1: # When there's another message in the thread, opens a hole in the right side of the room.
+			setExits(r, height, -1, 1, -1, -1)
 		col_num += 1
 		#setSign(level.getChunk(col_num, row_num), ['1','2','3','4'])
 		for ii, message in enumerate(thread):
-			if ii==12:
-				break
-
+			if ii==0:
+				continue
 			roomCopy(rooms["h_tunnel"], makeChunk(level, col_num, row_num), height)
 			col_num += 1
 			r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
-			setExits(r, height, True, True, False, False)
+			setExits(r, height, 1, 1, 0, 0) # Opens holes on the left and right for rotated rooms; closes top and bottom
 			if height<24:
 				theFloorIsLava(r, height)
 				dangerBlock = 10
@@ -253,7 +254,7 @@ def main():
 			col_num += 1
 		r = makeChunk(level, col_num, row_num)
 		if col_num - original_col_number <5:
-			unmakeHole(level.getChunk(col_num - 1, row_num), height)
+			setExits(level.getChunk(col_num - 1, row_num), height, -1, 0, -1, -1) # Closes right for last room in a short thread.
 		elif col_num - original_col_number <8:
 			roomCopy(rooms["treasure"], r, height)
 		else:
