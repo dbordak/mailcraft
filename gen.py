@@ -8,7 +8,6 @@ import shutil
 
 # TODO:
 # * Move all instances of "level" out of helper functions -- work on room references, instead.
-#   * Make saved level independent of base level.
 # * Replace makeHole, unmakeHole, and convertRoom to a general-purpose doorway-maker.
 # * Add more roomtypes (other than jumping puzzle)
 # * Change pillar_room from a map object to a function
@@ -89,15 +88,6 @@ def makeHole(room, h):
 def unmakeHole(room, h):
 	room.Blocks[15,7:9,4+h:6+h] = 98
 	room.chunkChanged()
-	return room
-
-def convertRoom(room, h):
-	#room.Blocks[0,7:9,4+h:6+h] = 0 # Same as makeHole, but on the left side
-	#room.Blocks[0,7:9,3+h] = 4     # Ditto.
-	#room.Blocks[7:9,0,4+h:6+h] = 98  # Fill doorway in with stone bricks
-	#room.Blocks[7:9,15,4+h:6+h] = 98 # Ditto.
-	#makeHole(room, h)
-	setExits(room, h, True, True, False, False)
 	return room
 
 def setExits(room, h, left, right, top, bottom):
@@ -254,7 +244,7 @@ def main():
 
 			placeHorizTunnel(level.getChunk(current_col_number, current_row_number), height, level)
 			current_col_number += 1
-			r = convertRoom(placeNextRoom(level.getChunk(current_col_number, current_row_number), seed, height, level), height)
+			r = setExits(placeNextRoom(level.getChunk(current_col_number, current_row_number), seed, height, level), height, True, True, False, False)
 #			if current_col_number%2==1:
 			# level.getChunk(current_col_number,current_row_number)
 			if height<16:
