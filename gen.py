@@ -27,17 +27,13 @@ rooms = {
 		}
 # Big room is in 6,0; 7,0; and 7,1.
 
-#def pickIndex(seed):
-#	random.seed(seed)
-#	return random.randint(2,5)
-
 def deleteChunk(chunk):
 	chunk.Blocks[:,:,:]=0
 	chunk.Data[:,:,:]=0
 	chunk.chunkChanged()
 	return to
 	
-def copyRoom(fro,to,h):
+def roomCopy(fro,to,h):
 	to.Blocks[:,:,3+h:] = fro.Blocks[:,:,3:256-h]
 	to.Data[:,:,3+h:] = fro.Data[:,:,3:256-h]
 	to.chunkChanged()
@@ -53,53 +49,11 @@ def roomType(room_name, world):
 	room_loc = rooms[room_name]
 	return world.getChunk(room_loc[0],room_loc[1])
 
-#def placeFirstRoom(room, level):
-#	start_block = level.getChunk(5,1)
-#	deepCopy(room,start_block)
-#	return room
-
-#def placeLastRoom(room, h, level):
-#	end_room = level.getChunk(6,1)
-#	replaceChunk(room,end_room,h)
-#	return room
-
-#def placeTreasureRoom(room, h, level):
-#	treasure_room_plain = level.getChunk(4,1)
-#	replaceChunk(room,treasure_room_plain,h)
-#	return room
-
-#def placeGaudyTreasureRoom(room, h, level):
-#	treasure_room_gaudy = level.getChunk(3,1)
-#	replaceChunk(room,treasure_room_gaudy,h)
-#	return room
-
 def placeNextRoom(room, seed, h, roomArray):
 	random.seed(seed)
 	i = random.randint(0,len(roomArray)-1)
-	#i = pickIndex(seed)
-	copyRoom(roomArray[i], room, h)
-	#roomtype = level.getChunk(i,0)
-	#replaceChunk(room,roomtype,h)
+	roomCopy(roomArray[i], room, h)
 	return room
-
-#def placeVerTunnel(room, h, level):
-#	v_tunnel = level.getChunk(1,0)
-#	replaceChunk(room,v_tunnel,h)
-#	return room
-
-#def placeHorizTunnel(room, h, level):
-#	h_tunnel = level.getChunk(2,1)
-#	replaceChunk(room, h_tunnel, h)
-#	return room
-
-#def placeStair(room, h, level):
-#	stairs = level.getChunk(1,1)
-#	replaceChunk(room, stairs, h)
-#	return room
-
-#def increaseHeight(room, h, level):
-#	placeStair(room, h, level)
-#	return h+8
 
 def makeHole(room, h):
 	room.Blocks[15,7:9,4+h:6+h] = 0 # Remove square-shaped hole
@@ -199,7 +153,6 @@ def main():
 	height = 0
 	
 	deepCopy(start_block,level.getChunk(current_col_number,current_row_number))
-	#placeFirstRoom(level.getChunk(current_col_number,current_row_number),level)
 	current_row_number += 1
 	
 	print 'Fetching mail...'
@@ -220,7 +173,8 @@ def main():
 		#level.saveInPlace()
 		print current_col_number
 		print current_row_number
-		r = setSign(level.getChunk(current_col_number,current_row_number))
+		#r = setSign(level.getChunk(current_col_number,current_row_number))
+		r = level.getChunk(current_col_number,current_row_number)
 		point=[6, 5+(int)(i/4)*8, 30+32*i]
 		tileEntity = level.tileEntityAt(6, 5+(int)(i/4)*8, 30+32*i)
 
@@ -249,10 +203,8 @@ def main():
 		if i==4 or i==8:
 			roomCopy(stairs,level.getChunk(0, current_row_number), height)
 			height += 8
-			#increaseHeight(level.getChunk(0, current_row_number), height, level)
 		else:
 			roomCopy(v_tunnel, level.getChunk(0,current_row_number), height)
-			#placeVerTunnel(level.getChunk(0, current_row_number), height, level)
 		#setSign(level.getChunk(2+current_col_number, 2+current_row_number), ['ffff','hh','',''])
 		current_row_number += 1
 		#T-room
@@ -271,12 +223,9 @@ def main():
 			if ii==7:
 				break
 
-			#placeHorizTunnel(level.getChunk(current_col_number, current_row_number), height, level)
 			roomCopy(h_tunnel, level.getChunk(current_col_number,current_row_number), height)
 			current_col_number += 1
 			r = setExits(placeNextRoom(level.getChunk(current_col_number, current_row_number), seed, height, room_sel), height, True, True, False, False)
-#			if current_col_number%2==1:
-			# level.getChunk(current_col_number,current_row_number)
 			if height<16:
 				theFloorIsLava(r,height)
 				dangerBlock = 10
@@ -289,12 +238,9 @@ def main():
 		r = level.getChunk(current_col_number, current_row_number)
 		if current_col_number - original_col_number <5:
 			unmakeHole(level.getChunk(current_col_number - 1, current_row_number), height)
-			#placeNextRoom(current_col_number, current_row_number, seed, height)
 		elif current_col_number - original_col_number <8:
-			#placeTreasureRoom(r, height, level)
 			roomCopy(treasure_room_plain, r, height)
 		else:
-			#placeGaudyTreasureRoom(r, height, level)
 			roomCopy(treasure_room_gaudy, r, height)
 		if i%2==1:
 			r = level.getChunk(0,current_row_number)
@@ -309,17 +255,9 @@ def main():
 		current_col_number=original_col_number
 	roomCopy(stairs,level.getChunk(0,current_row_number), height)
 	height += 8
-	#increaseHeight(level.getChunk(0,current_row_number), height, level)
 	current_row_number +=1
-	#placeLastRoom(level.getChunk(current_col_number,current_row_number), height, level)
 	roomCopy(end_room, level.getChunk(current_col_number, current_row_number), height)
 
-	#for i in range(0,5):
-		#placeNextRoom(current_col_number,current_row_number,random.random(),height)
-		#current_row_number += 1
-		#placeVerTunnel(current_row_number,height)
-		#current_row_number += 1
-	#setSign(2,2, ['1','2','3','4'])
 	print 'Built. Saving...'
 	level.saveInPlace()
 	print 'Done!'
