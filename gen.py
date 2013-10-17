@@ -53,9 +53,9 @@ def deepCopy(fro,to):
 	to.chunkChanged()
 	return to
 
-def roomType(room_name, world):
-	room_loc = rooms[room_name]
-	return world.getChunk(room_loc[0],room_loc[1])
+#def roomType(room_name, world):
+#	room_loc = rooms[room_name]
+#	return world.getChunk(room_loc[0],room_loc[1])
 
 def placeNextRoom(room, seed, h, roomArray):
 	random.seed(seed)
