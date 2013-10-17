@@ -27,6 +27,11 @@ rooms = {
 		}
 # Big room is in 6,0; 7,0; and 7,1.
 
+# Simple wrapper which returns the created chunk
+def makeChunk(world, col, row):
+	world.createChunk(col, row)
+	return world.getChunk(col, row)
+
 def deleteChunk(chunk):
 	chunk.Blocks[:,:,:]=0
 	chunk.Data[:,:,:]=0
@@ -47,7 +52,7 @@ def deepCopy(fro,to):
 
 def roomType(room_name, world):
 	room_loc = rooms[room_name]
-	return world.getChunk(room_loc[0],room_loc[1])
+	return makeChunk(world, room_loc[0],room_loc[1])
 
 def placeNextRoom(room, seed, h, roomArray):
 	random.seed(seed)
@@ -162,7 +167,7 @@ def main():
 	current_col_number = 0
 	height = 0
 	
-	deepCopy(start_block,level.getChunk(current_col_number,current_row_number))
+	deepCopy(start_block,makeChunk(level, current_col_number,current_row_number))
 	current_row_number += 1
 	
 	print 'Fetching mail...'
@@ -179,12 +184,12 @@ def main():
 		else:
 			placeVerTunnel(current_row_number,height)
 
-		roomCopy(v_tunnel, level.getChunk(0,current_row_number), height)
+		r = roomCopy(v_tunnel, makeChunk(level, 0, current_row_number), height)
 		#level.saveInPlace()
 		#print current_col_number
 		#print current_row_number
 		#r = setSign(level.getChunk(current_col_number,current_row_number))
-		r = level.getChunk(current_col_number,current_row_number)
+		#r = level.makeChunk(current_col_number,current_row_number)
 		point=[6, 5+(int)(i/4)*8, 30+32*i]
 		tileEntity = level.tileEntityAt(6, 5+(int)(i/4)*8, 30+32*i)
 
@@ -211,10 +216,10 @@ def main():
 		r.chunkChanged()
 
 		if i==4 or i==8:
-			roomCopy(stairs,level.getChunk(0, current_row_number), height)
+			roomCopy(stairs, r, height)#makeChunk(level, 0, current_row_number), height)
 			height += 8
 		else:
-			roomCopy(v_tunnel, level.getChunk(0,current_row_number), height)
+			roomCopy(v_tunnel, r, height)#makeChunk(level, 0,current_row_number), height)
 		#setSign(level.getChunk(2+current_col_number, 2+current_row_number), ['ffff','hh','',''])
 		current_row_number += 1
 		#T-room
@@ -224,18 +229,18 @@ def main():
 		else:
 			seed = random.random()
 		if len(thread)>1: #no openings on single rooms
-			makeHole(placeNextRoom(level.getChunk(current_col_number,current_row_number), seed, height, room_sel), height)
+			makeHole(placeNextRoom(makeChunk(level, current_col_number, current_row_number), seed, height, room_sel), height)
 		else:
-			placeNextRoom(level.getChunk(current_col_number,current_row_number), seed, height, room_sel)
+			placeNextRoom(makeChunk(level, current_col_number, current_row_number), seed, height, room_sel)
 		current_col_number += 1
 		#setSign(level.getChunk(current_col_number, current_row_number), ['1','2','3','4'])
 		for ii, message in enumerate(thread):
 			if ii==7:
 				break
 
-			roomCopy(h_tunnel, level.getChunk(current_col_number,current_row_number), height)
+			roomCopy(h_tunnel, makeChunk(level, current_col_number, current_row_number), height)
 			current_col_number += 1
-			r = setExits(placeNextRoom(level.getChunk(current_col_number, current_row_number), seed, height, room_sel), height, True, True, False, False)
+			r = setExits(placeNextRoom(makeChunk(level, current_col_number, current_row_number), seed, height, room_sel), height, True, True, False, False)
 			if height<16:
 				theFloorIsLava(r,height)
 				dangerBlock = 10
@@ -245,7 +250,7 @@ def main():
 			floorPuzzle(r,height,dangerBlock,(height/8)+1)
 
 			current_col_number += 1
-		r = level.getChunk(current_col_number, current_row_number)
+		r = makeChunk(level, current_col_number, current_row_number)
 		if current_col_number - original_col_number <5:
 			unmakeHole(level.getChunk(current_col_number - 1, current_row_number), height)
 		elif current_col_number - original_col_number <8:
@@ -253,7 +258,7 @@ def main():
 		else:
 			roomCopy(treasure_room_gaudy, r, height)
 		if i%2==1:
-			r = level.getChunk(0,current_row_number)
+			r = level.getChunk(0, current_row_number)
 			if height<16:
 				theFloorIsLava(r,height)
 				dangerBlock = 10
@@ -263,10 +268,10 @@ def main():
 			floorPuzzle(r,height,dangerBlock,(height/8)+1)
 		current_row_number += 1
 		current_col_number=original_col_number
-	roomCopy(stairs,level.getChunk(0,current_row_number), height)
+	roomCopy(stairs, makeChunk(level, 0, current_row_number), height)
 	height += 8
 	current_row_number +=1
-	roomCopy(end_room, level.getChunk(current_col_number, current_row_number), height)
+	roomCopy(end_room, makeChunk(level, current_col_number, current_row_number), height)
 
 	print 'Built. Saving...'
 	level.saveInPlace()
