@@ -31,7 +31,7 @@ def deleteChunk(chunk):
 	chunk.Blocks[:,:,:]=0
 	chunk.Data[:,:,:]=0
 	chunk.chunkChanged()
-	return to
+	return chunk
 	
 def roomCopy(fro,to,h):
 	to.Blocks[:,:,3+h:] = fro.Blocks[:,:,3:256-h]
@@ -131,6 +131,16 @@ def setSign(room, text=['','','','']):
 def main():
 	shutil.copytree("DungeonBase","Dungeon")
 	baseLevel = mclevel.fromFile(os.path.join("DungeonBase","level.dat"))
+
+	## This clears the base map of anything but template chunks
+	#chunkPositions = list(baseLevel.allChunks)
+	#for x,z in chunkPositions:
+	#	if z==0 or z==1:
+	#		if x>0 and x<8:
+	#			continue
+	#	deleteChunk(baseLevel.getChunk(x,z))
+	#
+	#baseLevel.saveInPlace()
 	
 	start_block = roomType("start", baseLevel)
 	v_tunnel = roomType("v_tunnel", baseLevel)
@@ -171,8 +181,8 @@ def main():
 
 		roomCopy(v_tunnel, level.getChunk(0,current_row_number), height)
 		#level.saveInPlace()
-		print current_col_number
-		print current_row_number
+		#print current_col_number
+		#print current_row_number
 		#r = setSign(level.getChunk(current_col_number,current_row_number))
 		r = level.getChunk(current_col_number,current_row_number)
 		point=[6, 5+(int)(i/4)*8, 30+32*i]
