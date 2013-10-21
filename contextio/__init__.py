@@ -1647,7 +1647,7 @@ class Message(Resource):
         folders: list - List of folders (or Gmail labels) this message is 
             found in
         sources: list of dicts
-        body: list of strings - the message body
+        body: list of dicts - Each dict represents a MIME part.
         flags: dict - the flags for this message
         folders: dict - the folders this message is in
         source: string - the raw email source

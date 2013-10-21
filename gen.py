@@ -59,39 +59,39 @@ def placeNextRoom(room, seed, h, roomArray):
 	#	makeTall(room)
 	return room
 
-# left, right, top, and bottom:
 # -1 = ignore
 # 0  = wall
 # 1  = door
-def setExits(room, h, left, right, top, bottom):
+def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
 	floor_mat = 4
 	floor = 3+h
-	if left>-1:
-		if left==1:
+
+	if west>-1:
+		if west==1:
 			l_block = 0
 			room.Blocks[0,7:9,floor]  = floor_mat
 		else:
 			l_block = STONE_BRICK
 		room.Blocks[0,7:9,floor+1:floor+3]  = l_block
 	
-	if right>-1:
-		if right==1:
+	if east>-1:
+		if east==1:
 			r_block = 0
 			room.Blocks[15,7:9,floor] = floor_mat
 		else:
 			r_block = STONE_BRICK
 		room.Blocks[15,7:9,floor+1:floor+3] = r_block
 
-	if top>-1:
-		if top==1:
+	if north>-1:
+		if north==1:
 			t_block = 0
 			room.Blocks[7:9,0,floor]  = floor_mat
 		else:
 			t_block = STONE_BRICK
 		room.Blocks[7:9,0,floor+1:floor+3]  = t_block
 
-	if bottom>-1:
-		if bottom==1:
+	if south>-1:
+		if south==1:
 			b_block = 0
 			room.Blocks[7:9,15,floor] = floor_mat
 		else:
@@ -233,7 +233,7 @@ def main():
 			seed = random.random()
 		r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
 		if len(thread)>1: # When there's another message in the thread, opens a hole in the right side of the room.
-			setExits(r, height, -1, 1, -1, -1)
+			setExits(r, height, east=1)
 		col_num += 1
 		#setSign(level.getChunk(col_num, row_num), ['1','2','3','4'])
 		for ii, message in enumerate(thread):
@@ -242,7 +242,7 @@ def main():
 			roomCopy(rooms["h_tunnel"], makeChunk(level, col_num, row_num), height)
 			col_num += 1
 			r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
-			setExits(r, height, 1, 1, 0, 0) # Opens holes on the left and right for rotated rooms; closes top and bottom
+			setExits(r, height, west=1, east=1, north=0, south=0)
 			if height<24:
 				theFloorIsLava(r, height)
 				dangerBlock = 10
@@ -254,7 +254,7 @@ def main():
 			col_num += 1
 		r = makeChunk(level, col_num, row_num)
 		if col_num - original_col_number <5:
-			setExits(level.getChunk(col_num - 1, row_num), height, -1, 0, -1, -1) # Closes right for last room in a short thread.
+			setExits(level.getChunk(col_num - 1, row_num), height, east=0) # Closes right for last room in a short thread.
 		elif col_num - original_col_number <8:
 			roomCopy(rooms["treasure"], r, height)
 		else:

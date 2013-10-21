@@ -1,5 +1,5 @@
 #mailcraft
-A Minecraft dungeon crawler generator that uses a user's email conversations to create rooms and hallways.
+A Minecraft dungeon generator that uses a user's email conversations to create rooms and hallways.
 
 Uses [context.io](http://context.io/) to fetch email data, and [pymclevel](https://github.com/mcedit/pymclevel) to edit Minecraft map files.
 
