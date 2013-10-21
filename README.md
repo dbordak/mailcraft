@@ -11,6 +11,7 @@ The dungeon consists of a straight hallway, leading to a dragon. Along the way a
 
 ##Dependencies
 The context.io library depends on the python libraries `rauth` and `requests`.
+Pymclevel depends upon the libraries `numpy` and `PyYaml`.
 
 ##Usage
 Create an account with context.io (make sure to select 2-legged authentication!), then make a file `secrets.py` with your credentials and email:
