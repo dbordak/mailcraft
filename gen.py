@@ -1,5 +1,6 @@
 #!/bin/python2
 
+from pymclevel.materials import alphaMaterials
 from pymclevel import mclevel, nbt
 from getmail import *
 import random
@@ -21,7 +22,6 @@ import shutil
 
 HEIGHT_INC  = 8
 STONE_BRICK = 98
-
 difficulty = [1, 2, 3, 4, 5, 7]
 length = [7, 12, 20, 30, -1]
 
@@ -63,7 +63,8 @@ def placeNextRoom(room, seed, h, roomArray):
 # 0  = wall
 # 1  = door
 def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
-	floor_mat = 4
+	floor_mat = alphaMaterials.Cobblestone.ID
+	wall_mat = alphaMaterials.StoneBricks.ID
 	floor = 3+h
 
 	if west>-1:
@@ -71,7 +72,7 @@ def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
 			l_block = 0
 			room.Blocks[0,7:9,floor]  = floor_mat
 		else:
-			l_block = STONE_BRICK
+			l_block = wall_mat
 		room.Blocks[0,7:9,floor+1:floor+3]  = l_block
 	
 	if east>-1:
@@ -79,7 +80,7 @@ def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
 			r_block = 0
 			room.Blocks[15,7:9,floor] = floor_mat
 		else:
-			r_block = STONE_BRICK
+			r_block = wall_mat
 		room.Blocks[15,7:9,floor+1:floor+3] = r_block
 
 	if north>-1:
@@ -87,7 +88,7 @@ def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
 			t_block = 0
 			room.Blocks[7:9,0,floor]  = floor_mat
 		else:
-			t_block = STONE_BRICK
+			t_block = wall_mat
 		room.Blocks[7:9,0,floor+1:floor+3]  = t_block
 
 	if south>-1:
@@ -95,26 +96,26 @@ def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
 			b_block = 0
 			room.Blocks[7:9,15,floor] = floor_mat
 		else:
-			b_block = STONE_BRICK
+			b_block = wall_mat
 		room.Blocks[7:9,15,floor+1:floor+3] = b_block
 	
 	room.chunkChanged()
 	return room
 
 def dangerFloor(room, h, dangerBlock, current_difficulty):
-	room.Blocks[:,:,:4+h] = STONE_BRICK
+	room.Blocks[:,:,:4+h] = alphaMaterials.StoneBricks.ID
 	room.Blocks[1:15,2:14,:4+h] = dangerBlock
 	room.ChunkChanged()
 	return room
 
 def theFloorIsLava(room, h):
-	room.Blocks[:,:,2+h:4+h] = STONE_BRICK # Create retaining area
+	room.Blocks[:,:,2+h:4+h] = alphaMaterials.StoneBricks.ID # Create retaining area
 	room.Blocks[1:15,2:14,3+h] = 10 # Add lava
 	room.chunkChanged()
 	return room
 
 def noFloor(room, h):
-	room.Blocks[:,:,:4+h] = STONE_BRICK # Create walls
+	room.Blocks[:,:,:4+h] = alphaMaterials.StoneBricks.ID # Create walls
 	room.Blocks[1:15,2:14,:4+h] = 0 # Remove floor
 	room.chunkChanged()
 	return room
@@ -129,10 +130,10 @@ def floorPuzzle(room, h, dangerBlock, diff):
 				room.Blocks[j,i,3+h] = dangerBlock
 
 def makePillar(room):
-	room.Blocks[3:5,3:5,:] = STONE_BRICK
-	room.Blocks[3:5,11:13,:] = STONE_BRICK
-	room.Blocks[11:13,3:5,:] = STONE_BRICK
-	room.Blocks[11:13,11:13,:] = STONE_BRICK
+	room.Blocks[3:5,3:5,:] = alphaMaterials.StoneBricks.ID
+	room.Blocks[3:5,11:13,:] = alphaMaterials.StoneBricks.ID
+	room.Blocks[11:13,3:5,:] = alphaMaterials.StoneBricks.ID
+	room.Blocks[11:13,11:13,:] = alphaMaterials.StoneBricks.ID
 	room.chunkChanged()
 	return room
 
@@ -158,6 +159,8 @@ def main():
 			"v_tunnel" : blockLevel.getChunk(0,1),
 			"basic"    : blockLevel.getChunk(0,2),
 			"basic2"   : blockLevel.getChunk(1,2),
+			#"pillar"   : blockLevel.getChunk(4,0),
+			#"tall"     : blockLevel.getChunk(5,0),
 			"stairs"   : blockLevel.getChunk(1,1),
 			"h_tunnel" : blockLevel.getChunk(2,1),
 			"treasure" : blockLevel.getChunk(3,0),
@@ -169,7 +172,6 @@ def main():
 	room_sel = [rooms["basic"], rooms["basic2"]]
 
 	level = mclevel.fromFile(path.join("Dungeon", "level.dat"))
-	
 	row_num = 0
 	col_num = 0
 	height = 0
@@ -263,7 +265,7 @@ def main():
 			r = level.getChunk(0, row_num)
 			if height<16:
 				theFloorIsLava(r,height)
-				dangerBlock = 10
+				dangerBlock = alphaMaterials.Lava.ID
 			else:
 				noFloor(r,height)
 				dangerBlock = 0
@@ -276,6 +278,7 @@ def main():
 	roomCopy(rooms["end"], makeChunk(level, col_num, row_num), height)
 
 	print 'Built. Saving...'
+	level.generateLights(level.allChunks)
 	level.saveInPlace()
 	print 'Done!'
 
