@@ -1,37 +1,40 @@
 import contextio as c
 from secrets import CONSUMER_KEY, CONSUMER_SECRET, EMAIL
 
+
 def getmail():
     context_io = c.ContextIO(
-        consumer_key=CONSUMER_KEY, 
+        consumer_key=CONSUMER_KEY,
         consumer_secret=CONSUMER_SECRET,
-        #debug=True
+        # debug=True
     )
 
     accounts = context_io.get_accounts(email=EMAIL)
 
-    data=[]
+    data = []
 
     threads = accounts[0].get_threads()
 
     for thread in threads:
         thread.get()
-        threaddata=[]
+        threaddata = []
         if thread.messages:
             for mes in thread.messages:
                 try:
-                    threaddata.append( { 'subject': mes.subject,
+                    threaddata.append({
+                        'subject': mes.subject,
                         'date': mes.date,
                         'from': mes.addresses['from']['email'],
                         'numrecip': len(mes.addresses['to'])+len(mes.addresses['cc'])
                     })
                 except:
                     try:
-                        threaddata.append( { 'subject': mes.subject,
-                        'date': mes.date,
-                        'from': mes.addresses['from']['email'],
-                        'numrecip': len(mes.addresses['to'])
-                    })
+                        threaddata.append({
+                            'subject': mes.subject,
+                            'date': mes.date,
+                            'from': mes.addresses['from']['email'],
+                            'numrecip': len(mes.addresses['to'])
+                        })
                     except:
                         0
         data.append(threaddata)

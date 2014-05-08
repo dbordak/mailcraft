@@ -5,9 +5,9 @@ Uses [context.io](http://context.io/) to fetch email data, and [pymclevel](https
 
 The dungeon consists of a straight hallway, leading to a dragon. Along the way are branching hallways, each representing a recent email thread, each consisting of several rooms of stepping puzzles, representing individual emails. At the end of each branching hallway is a treasure room, holding equipment necessary for fighting the dragon.
 
-![alt text](https://raw.github.com/dbordak/mailcraft/master/pic1.png "pic1")
-![alt text](https://raw.github.com/dbordak/mailcraft/master/pic2.png "pic2")
-![alt text](https://raw.github.com/dbordak/mailcraft/master/pic3.png "pic3")
+![alt text](https://raw.github.com/dbordak/mailcraft/master/img/preview1.png "pic1")
+![alt text](https://raw.github.com/dbordak/mailcraft/master/img/preview2.png "pic2")
+![alt text](https://raw.github.com/dbordak/mailcraft/master/img/preview3.png "pic3")
 
 ##Dependencies
 The context.io library depends on the python libraries `rauth` and `requests`.
