@@ -52,8 +52,7 @@ def deepCopy(fro, to):
 
 def placeNextRoom(room, seed, h, roomArray):
     random.seed(seed)
-    i = random.randint(0, len(roomArray)-1)
-    roomCopy(roomArray[i], room, h)
+    roomCopy(random.choice(roomArray), room, h)
     j = random.randint(0, 10)
     if j == 0:
         makePillar(room)
