@@ -2,16 +2,17 @@
 
 from pymclevel.materials import alphaMaterials
 from pymclevel import mclevel, nbt
-from getmail import *
+from getmail import getmail
 import random
 from os import path
-import shutil
+from shutil import copytree
 
 # TODO:
 # * Add more roomtypes (other than jumping puzzles).
 # * Change pillar_room from a map object to a function.
 #  * Maybe also same thing with tall_room
-# * Change SetExits so that it can add, remove, or ignore exits -- or so that it can add doors.
+# * Change SetExits so that it can add, remove, or ignore exits -- or
+#    so that it can add doors.
 # * Replace lava and pit with single dangerous room function.
 # * Rotated dangerfloors for message threads.
 # * Fix sign-laying function.
@@ -163,7 +164,7 @@ def main():
     difficulty_setting = difficulty[3]  # Range is 0 - 5
     length_setting = length[2]  # Range is 0 - 4
 
-    shutil.copytree("DungeonBase", "Dungeon")
+    copytree("DungeonBase", "Dungeon")
 
     blockLevel = mclevel.fromFile(path.join("DungeonBlocks", "level.dat"))
 
@@ -202,7 +203,8 @@ def main():
         r = roomCopy(rooms["v_tunnel"], makeChunk(level, 0, row_num), height)
 
         point = [6, 5+(int)(i/5)*HEIGHT_INC, 30+32*i]
-        # point=[6, 5+height, 30+32*i] # Only works when not a staircase -- for now.
+        # # Only works when not a staircase -- for now.
+        # point=[6, 5+height, 30+32*i]
         tileEntity = level.tileEntityAt(6, 5+(int)(i/5)*HEIGHT_INC, 30+32*i)
 
         linekeys = ["Text" + str(k) for k in xrange(1, 5)]
@@ -241,8 +243,10 @@ def main():
             seed = fro
         else:
             seed = random.random()
-        r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
-        # When there's another message in the thread, opens a hole in the right side of the room.
+        r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height,
+                          room_sel)
+        # Open a hole in the right side of rooms when there's another room in
+        # the thread.
         if len(thread) > 1:
             setExits(r, height, east=1)
         col_num += 1
@@ -250,9 +254,11 @@ def main():
         for ii, message in enumerate(thread):
             if ii == 0:
                 continue
-            roomCopy(rooms["h_tunnel"], makeChunk(level, col_num, row_num), height)
+            roomCopy(rooms["h_tunnel"], makeChunk(level, col_num, row_num),
+                     height)
             col_num += 1
-            r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height, room_sel)
+            r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height,
+                              room_sel)
             setExits(r, height, west=1, east=1, north=0, south=0)
             if height < 24:
                 theFloorIsLava(r, height)
@@ -263,8 +269,9 @@ def main():
             floorPuzzle(r, height, dangerBlock, (height/HEIGHT_INC)+1)
             col_num += 1
         r = makeChunk(level, col_num, row_num)
+        # Close right for last room in a short thread.
         if col_num - original_col_number < 5:
-            setExits(level.getChunk(col_num - 1, row_num), height, east=0) # Closes right for last room in a short thread.
+            setExits(level.getChunk(col_num - 1, row_num), height, east=0)
         elif col_num - original_col_number < 8:
             roomCopy(rooms["treasure"], r, height)
         else:

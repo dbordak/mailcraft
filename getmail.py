@@ -25,7 +25,8 @@ def getmail():
                         'subject': mes.subject,
                         'date': mes.date,
                         'from': mes.addresses['from']['email'],
-                        'numrecip': len(mes.addresses['to'])+len(mes.addresses['cc'])
+                        'numrecip': len(mes.addresses['to']) +
+                        len(mes.addresses['cc'])
                     })
                 except:
                     try:
