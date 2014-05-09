@@ -9,16 +9,12 @@ from shutil import copytree
 
 # TODO:
 # * Add more roomtypes (other than jumping puzzles).
-# * Change pillar_room from a map object to a function.
-#  * Maybe also same thing with tall_room
-# * Change SetExits so that it can add, remove, or ignore exits -- or
-#    so that it can add doors.
-# * Replace lava and pit with single dangerous room function.
+# * Change tall_room from a map object to a function.
+# * SetExits should actually add doors, rather than just doorways.
 # * Rotated dangerfloors for message threads.
 # * Fix sign-laying function.
 # * Alternate route in case of impossible jumping puzzle.
 # * Color-coded treasure rooms.
-# * Improve readability of setExits.
 # * Switch ordering of main loop (rooms before tunnels).
 
 HEIGHT_INC = 8
@@ -66,45 +62,21 @@ def placeNextRoom(room, seed, h, roomArray):
     return room
 
 
-# -1 = ignore
-# 0  = wall
-# 1  = door
-def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
+def setExits(room, h, directions):
     floor_mat = am.Cobblestone.ID
     wall_mat = am.StoneBricks.ID
+    dir_map = (("west", 0, slice(7, 9)), ("east", 15, slice(7, 9)),
+               ("north", slice(7, 9), 0), ("south", slice(7, 9), 15))
     floor = 3+h
 
-    if west > -1:
-        if west == 1:
-            l_block = 0
-            room.Blocks[0, 7:9, floor] = floor_mat
-        else:
-            l_block = wall_mat
-        room.Blocks[0, 7:9, floor+1:floor+3] = l_block
-
-    if east > -1:
-        if east == 1:
-            r_block = 0
-            room.Blocks[15, 7:9, floor] = floor_mat
-        else:
-            r_block = wall_mat
-        room.Blocks[15, 7:9, floor+1:floor+3] = r_block
-
-    if north > -1:
-        if north == 1:
-            t_block = 0
-            room.Blocks[7:9, 0, floor] = floor_mat
-        else:
-            t_block = wall_mat
-        room.Blocks[7:9, 0, floor+1:floor+3] = t_block
-
-    if south > -1:
-        if south == 1:
-            b_block = 0
-            room.Blocks[7:9, 15, floor] = floor_mat
-        else:
-            b_block = wall_mat
-        room.Blocks[7:9, 15, floor+1:floor+3] = b_block
+    for dir in dir_map:
+        if dir[0] in directions:
+            if directions[dir[0]] == 'd':
+                modblock = 0
+                room.Blocks[dir[1], dir[2], floor] = floor_mat
+            elif directions[dir[0]] == 'w':
+                modblock = wall_mat
+            room.Blocks[dir[1], dir[2], floor+1:floor+3] = modblock
 
     room.chunkChanged()
     return room
@@ -248,7 +220,7 @@ def main():
         # Open a hole in the right side of rooms when there's another room in
         # the thread.
         if len(thread) > 1:
-            setExits(r, height, east=1)
+            setExits(r, height, {"east": 'd'})
         col_num += 1
         # setSign(level.getChunk(col_num, row_num), ['1','2','3','4'])
         for ii, message in enumerate(thread):
@@ -259,7 +231,8 @@ def main():
             col_num += 1
             r = placeNextRoom(makeChunk(level, col_num, row_num), seed, height,
                               room_sel)
-            setExits(r, height, west=1, east=1, north=0, south=0)
+            setExits(r, height,
+                     {"west": 'd', "east": 'd', "north": 'w', "south": 'w'})
             if height < 24:
                 theFloorIsLava(r, height)
                 dangerBlock = 10
@@ -271,7 +244,8 @@ def main():
         r = makeChunk(level, col_num, row_num)
         # Close right for last room in a short thread.
         if col_num - original_col_number < 5:
-            setExits(level.getChunk(col_num - 1, row_num), height, east=0)
+            setExits(level.getChunk(col_num - 1, row_num), height,
+                     {"east": 'w'})
         elif col_num - original_col_number < 8:
             roomCopy(rooms["treasure"], r, height)
         else:
