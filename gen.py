@@ -23,8 +23,8 @@ from shutil import copytree
 
 HEIGHT_INC = 8
 STONE_BRICK = 98
-difficulty = [1, 2, 3, 4, 5, 7]
-length = [7, 12, 20, 30, -1]
+difficulty = (1, 2, 3, 4, 5, 7)
+length = (7, 12, 20, 30, -1)
 
 
 # Simple wrapper which returns the created chunk
