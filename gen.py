@@ -151,13 +151,13 @@ def makePillar(room):
 
 
 # sets all signs in chunk to text
-def setSign(room, text=['', '', '', '']):
-    for tileEntity in room.TileEntities:
-        print tileEntity
+# def setSign(room, text=['', '', '', '']):
+    # for tileEntity in room.TileEntities:
+        # print tileEntity
         # if tileEntity["id"].value == "Sign":
         #     for i in range(4):
         #         tileEntity["Text{0}".format(i + 1)].value = text[i]
-    return room
+    # return room
 
 
 def main():
