@@ -1,6 +1,6 @@
 #!/bin/python2
 
-from pymclevel.materials import alphaMaterials
+from pymclevel.materials import alphaMaterials as am
 from pymclevel import mclevel, nbt
 from getmail import getmail
 import random
@@ -70,8 +70,8 @@ def placeNextRoom(room, seed, h, roomArray):
 # 0  = wall
 # 1  = door
 def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
-    floor_mat = alphaMaterials.Cobblestone.ID
-    wall_mat = alphaMaterials.StoneBricks.ID
+    floor_mat = am.Cobblestone.ID
+    wall_mat = am.StoneBricks.ID
     floor = 3+h
 
     if west > -1:
@@ -111,21 +111,21 @@ def setExits(room, h, west=-1, east=-1, north=-1, south=-1):
 
 
 def dangerFloor(room, h, dangerBlock, current_difficulty):
-    room.Blocks[:, :, :4+h] = alphaMaterials.StoneBricks.ID
+    room.Blocks[:, :, :4+h] = am.StoneBricks.ID
     room.Blocks[1:15, 2:14, :4+h] = dangerBlock
     room.ChunkChanged()
     return room
 
 
 def theFloorIsLava(room, h):
-    room.Blocks[:, :, 2+h:4+h] = alphaMaterials.StoneBricks.ID # Create retaining area
+    room.Blocks[:, :, 2+h:4+h] = am.StoneBricks.ID  # Create retaining area
     room.Blocks[1:15, 2:14, 3+h] = 10  # Add lava
     room.chunkChanged()
     return room
 
 
 def noFloor(room, h):
-    room.Blocks[:, :, :4+h] = alphaMaterials.StoneBricks.ID # Create walls
+    room.Blocks[:, :, :4+h] = am.StoneBricks.ID  # Create walls
     room.Blocks[1:15, 2:14, :4+h] = 0  # Remove floor
     room.chunkChanged()
     return room
@@ -142,10 +142,10 @@ def floorPuzzle(room, h, dangerBlock, diff):
 
 
 def makePillar(room):
-    room.Blocks[3:5, 3:5, :] = alphaMaterials.StoneBricks.ID
-    room.Blocks[3:5, 11:13, :] = alphaMaterials.StoneBricks.ID
-    room.Blocks[11:13, 3:5, :] = alphaMaterials.StoneBricks.ID
-    room.Blocks[11:13, 11:13, :] = alphaMaterials.StoneBricks.ID
+    room.Blocks[3:5, 3:5, :] = am.StoneBricks.ID
+    room.Blocks[3:5, 11:13, :] = am.StoneBricks.ID
+    room.Blocks[11:13, 3:5, :] = am.StoneBricks.ID
+    room.Blocks[11:13, 11:13, :] = am.StoneBricks.ID
     room.chunkChanged()
     return room
 
@@ -280,7 +280,7 @@ def main():
             r = level.getChunk(0, row_num)
             if height < 16:
                 theFloorIsLava(r, height)
-                dangerBlock = alphaMaterials.Lava.ID
+                dangerBlock = am.Lava.ID
             else:
                 noFloor(r, height)
                 dangerBlock = 0
