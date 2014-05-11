@@ -106,10 +106,7 @@ def floorPuzzle(room, h, dangerBlock, diff):
     for i in xrange(2, 14):
         for j in xrange(1, 15):
             k = random.randint(0, diff)
-            if k == 0:
-                room.Blocks[j, i, 3+h] = 1
-            else:
-                room.Blocks[j, i, 3+h] = dangerBlock
+            room.Blocks[j, i, 3+h] = 1 if k == 0 else dangerBlock
 
 
 def makePillar(room):
@@ -121,14 +118,14 @@ def makePillar(room):
     return room
 
 
-# sets all signs in chunk to text
+# # sets all signs in chunk to text
 # def setSign(room, text=['', '', '', '']):
-    # for tileEntity in room.TileEntities:
-        # print tileEntity
-        # if tileEntity["id"].value == "Sign":
-        #     for i in range(4):
-        #         tileEntity["Text{0}".format(i + 1)].value = text[i]
-    # return room
+#     for tileEntity in room.TileEntities:
+#         print tileEntity
+#         if tileEntity["id"].value == "Sign":
+#         for i in range(4):
+#             tileEntity["Text{0}".format(i + 1)].value = text[i]
+#     return room
 
 
 def main():
